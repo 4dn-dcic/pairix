@@ -58,6 +58,8 @@ struct __ti_index_t {
         khash_t(i) **index;
         ti_lidx_t *index2;
         uint64_t linecount;
+        khash_t(s) *tname1, **tname2;  // used to speed up for 2D data, values of tname1 are indices of array tname2
+        int32_t ntname2; // length of array tname2
 };
 
 struct __ti_iter_t {
@@ -451,7 +453,7 @@ ti_index_t *ti_index_core(BGZF *fp, const ti_conf_t *conf)
 void ti_index_destroy(ti_index_t *idx)
 {
 	khint_t k;
-	int i;
+	int i, i2;
 	if (idx == 0) return;
 	// destroy the name hash table
 	for (k = kh_begin(idx->tname); k != kh_end(idx->tname); ++k) {
@@ -459,6 +461,23 @@ void ti_index_destroy(ti_index_t *idx)
 			free((char*)kh_key(idx->tname, k));
 	}
 	kh_destroy(s, idx->tname);
+        if(idx->tname1){
+  	    for (k = kh_begin(idx->tname1); k != kh_end(idx->tname1); ++k) {
+		if (kh_exist(idx->tname1, k))
+			free((char*)kh_key(idx->tname1, k));
+  	    }
+    	    kh_destroy(s, idx->tname);
+        }
+        if(idx->tname2){
+            for(i = 0; i < idx->ntname2; i++){
+                for (k = kh_begin(idx->tname2[i]); k != kh_end(idx->tname2[i]); ++k) {
+                if (kh_exist(idx->tname2[i], k))
+                        free((char*)kh_key(idx->tname2[i], k));
+                }
+                kh_destroy(s, idx->tname2[i]); 
+            }
+            free(idx->tname2);
+        }
 	// destroy the binning index
 	for (i = 0; i < idx->n; ++i) {
 		khash_t(i) *index = idx->index[i];
@@ -671,7 +690,41 @@ static ti_index_t *ti_index_load_core(BGZF *fp)
 		if (ti_is_be)
 			for (j = 0; j < index2->n; ++j) bam_swap_endian_8p(&index2->offset[j]);
 	}
+        if(ti_get_dim(idx)==2){
+            idx->tname1 = kh_init(s);
+            idx->tname2 = malloc(idx->n * sizeof(khash_t(s)*));
+            int nchrpairs;
+            int j, ret, i2, pos, i1=0;
+            char **chrpairs = ti_seqname(idx, &nchrpairs);
+            for(i=0;i<nchrpairs;i++){
+                char *s = chrpairs[i];
+                int L = strlen(s[i]);
+                /* split by dimension */
+                for(j = 0; j != L; j++) if(s[j] == ti_get_region_split_character(idx)) break;
+                s[j]=0; pos=j;
+                khiter_t iter = kh_get(s, idx->tname1, s);
+                if(iter == kh_end(idx->tname1)){
+                    khint_t k = kh_put(s, idx->tname1, s, &ret);
+                    kh_value(idx->tname1, k) = i1++;
+                    i2 = i1;
+                    idx->tname2[i2] = kh_init(s);
+                } else i2 = kh_value(idx->tname1, iter);
+                s[j] = ti_get_region_split_character(idx);
+                khint_t k = kh_put(s, idx->tname2[i2], s+pos+1, &ret);
+                kh_value(idx->tname2[i2], k) = kh_value(idx->tname, kh_get(s, idx->tname, s));
+            }
+            idx->ntname2 = i2;
+            free(chrpairs);
+        }
 	return idx;
+}
+
+/* get data dimension */
+//returns 1 for 1D
+//returns 2 for 2D
+char ti_get_dim(ti_index_t *idx)
+{
+    return(ti_get_sc2(idx)+1==0?1:2);
 }
 
 ti_index_t *ti_index_load_local(const char *fnidx)

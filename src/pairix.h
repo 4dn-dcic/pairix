@@ -166,6 +166,9 @@ extern "C" {
          * returns -2 if the file is 1D-indexed (not applicable) */
         int check_triangle(ti_index_t *idx);
 
+        /* check dimention (returns 1 or 2) */
+        char ti_get_dim(ti_index_t *idx);
+
 
 	/******************
 	 * Low-level APIs *
