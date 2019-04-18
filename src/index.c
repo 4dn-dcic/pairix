@@ -464,9 +464,9 @@ void ti_index_destroy(ti_index_t *idx)
         if(idx->tname1){
   	    for (k = kh_begin(idx->tname1); k != kh_end(idx->tname1); ++k) {
 		if (kh_exist(idx->tname1, k))
-			free((char*)kh_key(idx->tname1, k));
+		    free((char*)kh_key(idx->tname1, k));
   	    }
-    	    kh_destroy(s, idx->tname);
+    	    kh_destroy(s, idx->tname1);
         }
         if(idx->tname2){
             for(i = 0; i < idx->ntname2; i++){
@@ -690,6 +690,9 @@ static ti_index_t *ti_index_load_core(BGZF *fp)
 		if (ti_is_be)
 			for (j = 0; j < index2->n; ++j) bam_swap_endian_8p(&index2->offset[j]);
 	}
+        idx->tname1 = NULL;
+        idx->tname2 = NULL;
+        idx->ntname2 = 0;
         if(ti_get_dim(idx)==2){
             idx->tname1 = kh_init(s);
             idx->tname2 = malloc(idx->n * sizeof(khash_t(s)*));
@@ -698,23 +701,25 @@ static ti_index_t *ti_index_load_core(BGZF *fp)
             char **chrpairs = ti_seqname(idx, &nchrpairs);
             for(i=0;i<nchrpairs;i++){
                 char *s = chrpairs[i];
-                int L = strlen(s[i]);
+                int L = strlen(s);
                 /* split by dimension */
                 for(j = 0; j != L; j++) if(s[j] == ti_get_region_split_character(idx)) break;
                 s[j]=0; pos=j;
                 khiter_t iter = kh_get(s, idx->tname1, s);
                 if(iter == kh_end(idx->tname1)){
                     khint_t k = kh_put(s, idx->tname1, s, &ret);
-                    kh_value(idx->tname1, k) = i1++;
+                    kh_value(idx->tname1, k) = i1;
                     i2 = i1;
                     idx->tname2[i2] = kh_init(s);
+                    i1++;
                 } else i2 = kh_value(idx->tname1, iter);
                 s[j] = ti_get_region_split_character(idx);
                 khint_t k = kh_put(s, idx->tname2[i2], s+pos+1, &ret);
                 kh_value(idx->tname2[i2], k) = kh_value(idx->tname, kh_get(s, idx->tname, s));
             }
-            idx->ntname2 = i2;
+            idx->ntname2 = i2 + 1;
             free(chrpairs);
+            idx->tname2 = realloc(idx->tname2, idx->ntname2 * sizeof(khash_t(s)*));
         }
 	return idx;
 }
