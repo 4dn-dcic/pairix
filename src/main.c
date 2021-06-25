@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
     if(conf.bc2 && !conf.ec2) conf.ec2=conf.bc2;
     if (optind == argc || help_flag) {
         fprintf(stderr, "\n");
-        fprintf(stderr, "Program: pairix (PAIRs file InderXer)\n");
+        fprintf(stderr, "Program: pairix (PAIRs file IndeXer)\n");
         fprintf(stderr, "Version: %s\n\n", PACKAGE_VERSION);
         fprintf(stderr, "Usage:   pairix <in.pairs.gz> [region1 [region2 [...]]]\n\n");
         fprintf(stderr, "Options: -p STR     preset: pairs, merged_nodups, old_merged_nodups, gff, bed, sam, vcf, psltbl [gff]\n");
