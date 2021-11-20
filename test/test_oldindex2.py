@@ -35,45 +35,48 @@ TEST_FILE_2D_SPACE = 'samples/old_index2/merged_nodups.space.chrblock_sorted.sub
 def get_header(filename, meta_char='#'):
     """Read gzipped file and retrieve lines beginning with '#'."""
     retval = []
-    for line in gzip.open(filename):
-        try:
-            line = line.decode('utf-8')
-        except AttributeError:
-            pass
-        if line.startswith(meta_char):
-            retval.append(line.rstrip())
+    with gzip.open(filename) as f:
+        for line in f:
+            try:
+                line = line.decode('utf-8')
+            except AttributeError:
+                pass
+            if line.startswith(meta_char):
+                retval.append(line.rstrip())
     return retval
 
 
 def get_chromsize(filename):
     """Read gzipped file and retrieve chromsize."""
     retval = []
-    for line in gzip.open(filename):
-        try:
-            line = line.decode('utf-8')
-        except AttributeError:
-            pass
-        if line.startswith('#chromsize: '):
-            fields = line.rstrip().split('\s+')
-            chrname = fields[1]
-            chrsize = fields[2]
-            retval.append([chrname, chrsize])
+    with gzip.open(filename) as f:
+        for line in f:
+            try:
+                line = line.decode('utf-8')
+            except AttributeError:
+                pass
+            if line.startswith('#chromsize: '):
+                fields = line.rstrip().split('\s+')
+                chrname = fields[1]
+                chrsize = fields[2]
+                retval.append([chrname, chrsize])
     return retval
 
 
 def read_vcf(filename):
     """Read a VCF file and return a list of [chrom, start, end] items."""
     retval = []
-    for line in gzip.open(filename):
-        try:
-            line = line.decode('utf-8')
-        except AttributeError:
-            pass
-        fields = line.rstrip().split('\t')
-        chrom = fields[0]
-        start = fields[1]
-        end = fields[1]
-        retval.append([chrom, start, end])
+    with gzip.open(filename) as f:
+        for line in f:
+            try:
+                line = line.decode('utf-8')
+            except AttributeError:
+                pass
+            fields = line.rstrip().split('\t')
+            chrom = fields[0]
+            start = fields[1]
+            end = fields[1]
+            retval.append([chrom, start, end])
     return retval
 
 
@@ -82,20 +85,21 @@ def find_pairs_type(filename, delimiter='\t'):
     or undetermined. Do this by testing string values of """
     is_juicer = False
     is_4DN = False
-    for line in gzip.open(filename):
-        try:
-            line = line.decode('utf-8')
-        except AttributeError:
-            pass
-        fields = line.rstrip().split(delimiter)
-        if len(fields)>=6 and is_str(fields[2]) and is_str(fields[6]):
-            is_juicer = True
-        if is_str(fields[2]) and is_str(fields[4]):
-            is_4DN = True
-        if not is_juicer and is_4DN:
-            return '4DN'
-        elif is_juicer:
-            return 'juicer'
+    with gzip.open(filename) as f:
+        for line in f:
+            try:
+                line = line.decode('utf-8')
+            except AttributeError:
+                pass
+            fields = line.rstrip().split(delimiter)
+            if len(fields)>=6 and is_str(fields[2]) and is_str(fields[6]):
+                is_juicer = True
+            if is_str(fields[2]) and is_str(fields[4]):
+                is_4DN = True
+            if not is_juicer and is_4DN:
+                return '4DN'
+            elif is_juicer:
+                return 'juicer'
     return 'undetermined'
 
 
@@ -114,25 +118,26 @@ def read_pairs(filename, file_type='undetermined', delimiter='\t'):
     if file_type == 'undetermined':
         return []
     retval = []
-    for line in gzip.open(filename):
-        try:
-            line = line.decode('utf-8')
-        except AttributeError:
-            pass
-        if line.startswith('#'):
-            continue
-        fields = line.rstrip().split(delimiter)
-        if file_type == 'juicer':
-            chrom1 = fields[1]
-            start1 = fields[2]
-            chrom2 = fields[5]
-            start2 = fields[6]
-        elif file_type == '4DN':
-            chrom1 = fields[1]
-            start1 = fields[2]
-            chrom2 = fields[3]
-            start2 = fields[4]
-        retval.append([chrom1, start1, start1, chrom2, start2, start2])
+    with gzip.open(filename) as f:
+        for line in f:
+            try:
+                line = line.decode('utf-8')
+            except AttributeError:
+                pass
+            if line.startswith('#'):
+                continue
+            fields = line.rstrip().split(delimiter)
+            if file_type == 'juicer':
+                chrom1 = fields[1]
+                start1 = fields[2]
+                chrom2 = fields[5]
+                start2 = fields[6]
+            elif file_type == '4DN':
+                chrom1 = fields[1]
+                start1 = fields[2]
+                chrom2 = fields[3]
+                start2 = fields[4]
+            retval.append([chrom1, start1, start1, chrom2, start2, start2])
     return retval
 
 
