@@ -1216,7 +1216,7 @@ sequential_iter_t *ti_querys_2d_general(pairix_t *t, const char *reg)
          if( (chrend = strchr(chr2, ':')) != NULL) {
             *chrend=0; chronly=0;
          }
-         char **chrpairlist = ti_seqname(t->idx, &n_seqpair_list);
+         char **chrpairlist = (char**)ti_seqname(t->idx, &n_seqpair_list);
          chr1list = get_seq1_list_for_given_seq2(chr2, chrpairlist, n_seqpair_list, &n_sub_list);
          if(chronly==0) *chrend=':';  // revert to original region string including beg and end
          // create an array of regions in string.
@@ -1233,7 +1233,7 @@ sequential_iter_t *ti_querys_2d_general(pairix_t *t, const char *reg)
          free(chr1list);
 
          // multi-region query
-         sequential_iter_t *siter = ti_querys_2d_multi(t, regions, n_sub_list);
+         sequential_iter_t *siter = ti_querys_2d_multi(t, (const char**)regions, n_sub_list);
          for(i=0;i<n_sub_list;i++) free(regions[i]);
          free(regions);
          return(siter);
@@ -1243,7 +1243,7 @@ sequential_iter_t *ti_querys_2d_general(pairix_t *t, const char *reg)
          if( (chrend = strchr(chr1, ':')) != NULL) {
             *chrend=0; chronly=0;
          }
-         char **chrpairlist = ti_seqname(t->idx, &n_seqpair_list);
+         char **chrpairlist = (char**)ti_seqname(t->idx, &n_seqpair_list);
          chr2list = get_seq2_list_for_given_seq1(chr1, chrpairlist, n_seqpair_list, &n_sub_list);
          if(chronly==0) *chrend=':';  // revert to original region string including beg and end
 
@@ -1260,7 +1260,7 @@ sequential_iter_t *ti_querys_2d_general(pairix_t *t, const char *reg)
          for(i=0;i<n_sub_list;i++) free(chr2list[i]);
          free(chr2list);
 
-         sequential_iter_t *siter = ti_querys_2d_multi(t, regions, n_sub_list);
+         sequential_iter_t *siter = ti_querys_2d_multi(t, (const char**)regions, n_sub_list);
          for(i=0;i<n_sub_list;i++) free(regions[i]);
          free(regions);
          return(siter);
@@ -1414,7 +1414,7 @@ int ti_query_2d_tid(pairix_t *t, const char *name, int beg, int end, const char 
         str_ptr++;
         strcpy(str_ptr,name2);
 
-	if (name == 0) return ti_iter_first();
+	if (name == 0) return (int)ti_iter_first();
 	// then need to load the index
 	if (ti_lazy_index_load(t) != 0) return 0;
         if(ti_get_tid(t->idx, namepair) <0) return -1;
@@ -1640,7 +1640,7 @@ char** get_unique_merged_seqname(pairix_t **tbs, int n, int *pn_uniq_seq)
      if(n<=0) { fprintf(stderr, "Null pairix_t array\n"); return(0); }
      for(i=0;i<n;i++){
       if(tbs[i] && tbs[i]->idx){
-            seqnames = ti_seqname(tbs[i]->idx,&len);
+            seqnames = (char**)ti_seqname(tbs[i]->idx,&len);
             if(seqnames){
               conc_seq_list = realloc(conc_seq_list, sizeof(char*)*(n_seq_list+len));
               for(k=0,j=n_seq_list;j<n_seq_list+len;j++,k++)
@@ -1968,7 +1968,7 @@ int check_triangle(ti_index_t *idx)
     if(ti_get_sc2(idx) == -1) return(-2);  // not a 2d file (not applicable)
 
     int len;
-    char **seqnames = ti_seqname(idx,&len);
+    const char **seqnames = ti_seqname(idx,&len);
     if(seqnames){
       int i;
       for(i=0;i<len;i++){

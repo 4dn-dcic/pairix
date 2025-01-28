@@ -600,7 +600,7 @@ static PyObject *
 pairix_get_blocknames(PairixObject *self)
 {
   int n,i;
-  char **blocknames = ti_seqname(self->tb->idx, &n);
+  char **blocknames = (char**)ti_seqname(self->tb->idx, &n);
   PyObject *bnames = PyList_New(n);
   if(!bnames) return NULL;
   for(i=0;i<n;i++){
