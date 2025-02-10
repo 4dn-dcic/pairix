@@ -254,6 +254,11 @@ int main(int argc, char *argv[])
         }
         ti_index_destroy(idx);
         free(names);
+        free(fp->uncompressed_block);
+        free(fp->compressed_block);
+        free(fp->cache);
+        free(fp->fp);
+        free(fp);
         return 0;
     }
     if(check_triangle_only){
