@@ -199,3 +199,14 @@ if [ ! -z "$(diff out.1d.pairs out2.1d.pairs)" ]; then
   return 1;
 fi
 rm -f out.1d.pairs out2.1d.pairs
+
+
+## sort-pairs test
+echo "test sort-pairs"
+. util/sort-pairs.sh samples/tiny_unsorted.pairs.gz out
+if [ ! -z "$(gunzip -c out.pairs.gz | diff - test/files/output_sort_tiny_unsorted.pairs)"]; then
+  echo "test sort-pairs failed"
+  return 1;
+fi
+rm -f out.pairs.gz*
+
